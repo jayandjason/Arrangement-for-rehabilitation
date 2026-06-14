@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>看板端 - 病人预约管理系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>看板端 - 病人预约管理系统 <small>v{{ config.VERSION }}</small></h1>
+            <div class="user-info">
+                <span>欢迎, {{ session.user.real_name }}</span>
+                <a href="{{ url_for('change_password') }}" class="btn btn-small btn-info">修改密码</a>
+                {% if session.user.role == 'admin' %}
+                <a href="{{ url_for('admin_accounts') }}" class="btn btn-small btn-warning">账户管理</a>
+                {% endif %}
+                <a href="{{ url_for('logout') }}" class="btn btn-small">退出</a>
+            </div>
+        </header>
+
+        <!-- 时间筛选和操作 -->
+        <section class="section">
+            <h2>时间筛选与操作</h2>
+            <form method="GET" action="{{ url_for('dashboard') }}" class="filter-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>开始日期</label>
+                        <input type="date" name="start_date" value="{{ start_date }}">
+                    </div>
+                    <div class="form-group">
+                        <label>结束日期</label>
+                        <input type="date" name="end_date" value="{{ end_date }}">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end; gap: 10px;">
+                        <button type="submit" class="btn btn-primary">筛选</button>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">清除筛选</a>
+                    </div>
+                </div>
+            </form>
+            <div class="action-buttons" style="margin-top: 15px;">
+                <a href="{{ url_for('export_data', start_date=start_date, end_date=end_date) }}" class="btn btn-success">导出数据(CSV)</a>
+                <a href="{{ url_for('backup_database') }}" class="btn btn-warning">数据库备份</a>
+                <button onclick="showBackupModal()" class="btn btn-info">恢复备份</button>
+            </div>
+        </section>
+
+        <!-- 统计概览 -->
+        <section class="section">
+            <h2>统计概览</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>总预约数</h3>
+                    <p class="stat-number">{{ summary_counts.total_count }}</p>
+                </div>
+                <div class="stat-card">
+                    <h3>待安排</h3>
+                    <p class="stat-number">{{ summary_counts.pending_count }}</p>
+                </div>
+                <div class="stat-card">
+                    <h3>已安排治疗</h3>
+                    <p class="stat-number">{{ summary_counts.scheduled_count }}</p>
+                </div>
+                <div class="stat-card" style="background: #ffebee;">
+                    <h3>拒绝安排</h3>
+                    <p class="stat-number" style="color: #c62828;">{{ summary_counts.rejected_count }}</p>
+                </div>
+                <div class="stat-card cancelled-card">
+                    <h3>已取消</h3>
+                    <p class="stat-number">{{ summary_counts.cancelled_count }}</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 专业组平均安排时间 -->
+        <section class="section">
+            <h2>专业组平均安排时间（天）</h2>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>专业组</th>
+                            <th>平均安排时间（天）</th>
+                            <th>排序</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in specialty_stats %}
+                        <tr>
+                            <td>{{ stat.specialty_group }}</td>
+                            <td>
+                                {% if stat.avg_days %}
+                                    {{ "%.1f"|format(stat.avg_days) }} 天
+                                {% else %}
+                                    暂无数据
+                                {% endif %}
+                            </td>
+                            <td>{{ loop.index }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 每月统计汇总 -->
+        <section class="section">
+            <h2>每月统计汇总</h2>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>专业组</th>
+                            <th>总预约数</th>
+                            <th>新病人</th>
+                            <th>老病人</th>
+                            <th>待安排</th>
+                            <th>已安排</th>
+                            <th>拒绝安排</th>
+                            <th>已取消</th>
+                            <th>平均安排时间（天）</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in monthly_stats %}
+                        <tr>
+                            <td>{{ stat.specialty_group }}</td>
+                            <td>{{ stat.total_count }}</td>
+                            <td>{{ stat.new_count }}</td>
+                            <td>{{ stat.old_count }}</td>
+                            <td>{{ stat.pending_count }}</td>
+                            <td>{{ stat.scheduled_count }}</td>
+                            <td style="color: #c62828;">{{ stat.rejected_count }}</td>
+                            <td style="color: #7f4f24;">{{ stat.cancelled_count }}</td>
+                            <td>
+                                {% if stat.avg_days %}
+                                    {{ "%.1f"|format(stat.avg_days) }} 天
+                                {% else %}
+                                    暂无数据
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 患者详细列表 -->
+        <section class="section">
+            <h2>患者详细列表</h2>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>姓名</th>
+                            <th>年龄</th>
+                            <th>电话</th>
+                            <th>诊断</th>
+                            <th>类型</th>
+                            <th>专业组</th>
+                            <th>就诊</th>
+                            <th>预约医生</th>
+                            <th>治疗项目</th>
+                            <th>安排状态</th>
+                            <th>责任治疗师</th>
+                            <th>安排时间</th>
+                            <th>取消原因</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in patients %}
+                        <tr {% if patient.is_cancelled == 1 %}class="cancelled"{% elif patient.is_scheduled == 1 %}class="scheduled"{% elif patient.is_scheduled == 2 %}class="rejected"{% endif %}>
+                            <td>{{ patient.name }}</td>
+                            <td>{{ patient.age }}</td>
+                            <td>{{ patient.phone or '-' }}</td>
+                            <td>{{ patient.diagnosis }}</td>
+                            <td>{{ patient.patient_type }}</td>
+                            <td>{{ patient.specialty_group }}</td>
+                            <td>{{ patient.visit_type }}</td>
+                            <td>{{ patient.doctor }}</td>
+                            <td>{{ patient.treatment_project or '-' }}</td>
+                            <td>
+                                {% if patient.is_cancelled == 1 %}
+                                    <span class="status-cancelled">已取消</span>
+                                {% elif patient.is_scheduled == 1 %}
+                                    <span class="status-scheduled">已安排</span>
+                                {% elif patient.is_scheduled == 2 %}
+                                    <span class="status-rejected">拒绝安排</span>
+                                {% else %}
+                                    <span class="status-pending">待安排</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ patient.primary_therapist or '-' }}</td>
+                            <td>
+                                {% if patient.schedule_time %}
+                                    {{ patient.schedule_time[:19] }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>{{ patient.cancelled_reason or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 备份恢复模态框 -->
+        <div id="backupModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeBackupModal()">&times;</span>
+                <h3>数据库备份管理</h3>
+                <div id="backupList">
+                    <p>加载中...</p>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function showBackupModal() {
+                document.getElementById('backupModal').style.display = 'block';
+                loadBackups();
+            }
+
+            function closeBackupModal() {
+                document.getElementById('backupModal').style.display = 'none';
+            }
+
+            function loadBackups() {
+                fetch('/get_backups')
+                    .then(response => response.json())
+                    .then(backups => {
+                        const listDiv = document.getElementById('backupList');
+                        if (backups.length === 0) {
+                            listDiv.innerHTML = '<p>暂无备份文件</p>';
+                            return;
+                        }
+
+                        let html = '<table class="data-table"><thead><tr><th>备份文件</th><th>大小</th><th>修改时间</th><th>操作</th></tr></thead><tbody>';
+                        backups.forEach(backup => {
+                            html += `<tr>
+                                <td>${backup.name}</td>
+                                <td>${backup.size}</td>
+                                <td>${backup.modified}</td>
+                                <td>
+                                    <form method="POST" action="/restore_database" style="display: inline;">
+                                        <input type="hidden" name="backup_file" value="${backup.path}">
+                                        <button type="submit" class="btn btn-small btn-warning" onclick="return confirm('确定要恢复此备份吗？当前数据将被覆盖！')">恢复</button>
+                                    </form>
+                                </td>
+                            </tr>`;
+                        });
+                        html += '</tbody></table>';
+                        listDiv.innerHTML = html;
+                    })
+                    .catch(error => {
+                        document.getElementById('backupList').innerHTML = '<p>加载失败：' + error + '</p>';
+                    });
+            }
+
+            // 点击模态框外部关闭
+            window.onclick = function(event) {
+                if (event.target.classList.contains('modal')) {
+                    event.target.style.display = 'none';
+                }
+            }
+        </script>
+    </div>
+</body>
+</html>

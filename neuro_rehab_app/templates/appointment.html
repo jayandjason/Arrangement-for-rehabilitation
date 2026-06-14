@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>预约端 - 病人预约管理系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>预约端 - 病人预约管理系统 <small>v{{ config.VERSION }}</small></h1>
+            <div class="user-info">
+                <span>欢迎, {{ session.user.real_name }}</span>
+                <a href="{{ url_for('change_password') }}" class="btn btn-small btn-info">修改密码</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-small">退出</a>
+            </div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- 添加患者表单 -->
+        <section class="section">
+            <h2>添加新患者</h2>
+            <form method="POST" action="{{ url_for('add_patient') }}" class="patient-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>姓名 *</label>
+                        <input type="text" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>年龄 *</label>
+                        <input type="number" name="age" min="0" max="150" required>
+                    </div>
+                    <div class="form-group">
+                        <label>电话</label>
+                        <input type="text" name="phone" placeholder="联系电话">
+                    </div>
+                    <div class="form-group">
+                        <label>诊断</label>
+                        <input type="text" name="diagnosis" placeholder="如：抑郁症、焦虑症">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>患者类型 *</label>
+                        <select name="patient_type" required>
+                            <option value="新病人">新病人</option>
+                            <option value="老病人">老病人</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>治疗专业组 *</label>
+                        <select name="specialty_group" required>
+                            <option value="">请选择</option>
+                            <option value="认知康复组">认知康复组</option>
+                            <option value="情绪管理组">情绪管理组</option>
+                            <option value="行为治疗组">行为治疗组</option>
+                            <option value="物理治疗组">物理治疗组</option>
+                            <option value="言语治疗组">言语治疗组</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>主要障碍</label>
+                        <input type="text" name="main_obstacle" placeholder="如：记忆力下降、情绪不稳定">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>就诊类型 *</label>
+                        <select name="visit_type" required>
+                            <option value="门诊">门诊</option>
+                            <option value="住院">住院</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>预约医生 *</label>
+                        <input type="text" name="doctor" required placeholder="医生姓名">
+                    </div>
+                    <div class="form-group">
+                        <label>治疗项目</label>
+                        <input type="text" name="treatment_project" placeholder="如：认知训练、物理治疗">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">添加患者</button>
+            </form>
+        </section>
+
+        <!-- 患者列表 -->
+        <section class="section">
+            <h2>患者预约列表</h2>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>姓名</th>
+                            <th>年龄</th>
+                            <th>电话</th>
+                            <th>诊断</th>
+                            <th>类型</th>
+                            <th>专业组</th>
+                            <th>主要障碍</th>
+                            <th>就诊</th>
+                            <th>预约医生</th>
+                            <th>治疗项目</th>
+                            <th>预约时间</th>
+                            <th>安排状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in patients %}
+                        <tr {% if patient.is_scheduled %}class="scheduled"{% endif %}
+                            data-name="{{ patient.name }}"
+                            data-age="{{ patient.age }}"
+                            data-phone="{{ patient.phone or '' }}"
+                            data-diagnosis="{{ patient.diagnosis or '' }}"
+                            data-patient-type="{{ patient.patient_type }}"
+                            data-specialty-group="{{ patient.specialty_group }}"
+                            data-main-obstacle="{{ patient.main_obstacle or '' }}"
+                            data-visit-type="{{ patient.visit_type }}"
+                            data-doctor="{{ patient.doctor }}"
+                            data-treatment-project="{{ patient.treatment_project or '' }}">
+                            <td>{{ patient.name }}</td>
+                            <td>{{ patient.age }}</td>
+                            <td>{{ patient.phone or '-' }}</td>
+                            <td>{{ patient.diagnosis }}</td>
+                            <td>{{ patient.patient_type }}</td>
+                            <td>{{ patient.specialty_group }}</td>
+                            <td>{{ patient.main_obstacle }}</td>
+                            <td>{{ patient.visit_type }}</td>
+                            <td>{{ patient.doctor }}</td>
+                            <td>{{ patient.treatment_project or '-' }}</td>
+                            <td>{{ patient.appointment_time[:19] }}</td>
+                            <td>
+                                {% if patient.is_scheduled %}
+                                    <span class="status-scheduled">已安排</span>
+                                {% else %}
+                                    <span class="status-pending">待安排</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-small btn-edit" onclick="editPatient({{ patient.id }})">修改</button>
+                                <button class="btn btn-small btn-cancel" onclick="cancelPatient({{ patient.id }})">取消</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 修改患者模态框 -->
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeEditModal()">&times;</span>
+                <h3>修改患者信息</h3>
+                <form id="editForm" method="POST">
+                    <input type="hidden" name="patient_id" id="edit_patient_id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>姓名 *</label>
+                            <input type="text" name="name" id="edit_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>年龄 *</label>
+                            <input type="number" name="age" id="edit_age" min="0" max="150" required>
+                        </div>
+                        <div class="form-group">
+                            <label>电话</label>
+                            <input type="text" name="phone" id="edit_phone">
+                        </div>
+                        <div class="form-group">
+                            <label>诊断</label>
+                            <input type="text" name="diagnosis" id="edit_diagnosis">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>患者类型 *</label>
+                            <select name="patient_type" id="edit_patient_type" required>
+                                <option value="新病人">新病人</option>
+                                <option value="老病人">老病人</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>治疗专业组 *</label>
+                            <select name="specialty_group" id="edit_specialty_group" required>
+                                <option value="">请选择</option>
+                                <option value="认知康复组">认知康复组</option>
+                                <option value="情绪管理组">情绪管理组</option>
+                                <option value="行为治疗组">行为治疗组</option>
+                                <option value="物理治疗组">物理治疗组</option>
+                                <option value="言语治疗组">言语治疗组</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>主要障碍</label>
+                            <input type="text" name="main_obstacle" id="edit_main_obstacle">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>就诊类型 *</label>
+                            <select name="visit_type" id="edit_visit_type" required>
+                                <option value="门诊">门诊</option>
+                                <option value="住院">住院</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>预约医生 *</label>
+                            <input type="text" name="doctor" id="edit_doctor" required>
+                        </div>
+                        <div class="form-group">
+                            <label>治疗项目</label>
+                            <input type="text" name="treatment_project" id="edit_treatment_project">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">保存修改</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 取消预约模态框 -->
+        <div id="cancelModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeCancelModal()">&times;</span>
+                <h3>取消预约</h3>
+                <form id="cancelForm" method="POST">
+                    <input type="hidden" name="patient_id" id="cancel_patient_id">
+                    <div class="form-group">
+                        <label>取消原因 *</label>
+                        <textarea name="cancel_reason" id="cancel_reason" rows="3" placeholder="请输入取消原因" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger">确认取消</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function editPatient(id) {
+            const row = document.querySelector(`tr:has(button[onclick="editPatient(${id})"])`);
+            if (row) {
+                document.getElementById('edit_patient_id').value = id;
+                document.getElementById('edit_name').value = row.dataset.name || '';
+                document.getElementById('edit_age').value = row.dataset.age || '';
+                document.getElementById('edit_phone').value = row.dataset.phone || '';
+                document.getElementById('edit_diagnosis').value = row.dataset.diagnosis || '';
+                document.getElementById('edit_patient_type').value = row.dataset.patientType || '';
+                document.getElementById('edit_specialty_group').value = row.dataset.specialtyGroup || '';
+                document.getElementById('edit_main_obstacle').value = row.dataset.mainObstacle || '';
+                document.getElementById('edit_visit_type').value = row.dataset.visitType || '';
+                document.getElementById('edit_doctor').value = row.dataset.doctor || '';
+                document.getElementById('edit_treatment_project').value = row.dataset.treatmentProject || '';
+            }
+            document.getElementById('editForm').action = `/update_patient/${id}`;
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        function cancelPatient(id) {
+            document.getElementById('cancel_patient_id').value = id;
+            document.getElementById('cancel_reason').value = '';
+            document.getElementById('cancelForm').action = `/cancel_patient/${id}`;
+            document.getElementById('cancelModal').style.display = 'block';
+        }
+
+        function closeCancelModal() {
+            document.getElementById('cancelModal').style.display = 'none';
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

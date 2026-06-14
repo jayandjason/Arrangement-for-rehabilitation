@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>账户管理 - 神经心理康复中心</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>账户管理</h1>
+            <div class="user-info">
+                <span>欢迎，{{ session.user.real_name }} (管理员)</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-small">退出</a>
+            </div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- 创建新账户 -->
+        <div class="section">
+            <h2>创建新账户</h2>
+            <form method="POST" action="{{ url_for('create_account') }}">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" name="username" required placeholder="请输入用户名">
+                    </div>
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input type="password" name="password" required placeholder="请输入密码">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>角色</label>
+                        <select name="role" required>
+                            <option value="">请选择角色</option>
+                            <option value="appointment">预约端</option>
+                            <option value="schedule">安排端</option>
+                            <option value="dashboard">看板端</option>
+                            <option value="admin">管理员</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>真实姓名</label>
+                        <input type="text" name="real_name" required placeholder="请输入真实姓名">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">创建账户</button>
+            </form>
+        </div>
+
+        <!-- 账户列表 -->
+        <div class="section">
+            <h2>账户列表</h2>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>用户名</th>
+                            <th>真实姓名</th>
+                            <th>角色</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.real_name }}</td>
+                            <td>
+                                {% if user.role == 'appointment' %}
+                                    <span class="status-pending">预约端</span>
+                                {% elif user.role == 'schedule' %}
+                                    <span class="status-scheduled">安排端</span>
+                                {% elif user.role == 'dashboard' %}
+                                    <span class="status-scheduled">看板端</span>
+                                {% elif user.role == 'admin' %}
+                                    <span style="background: #9c27b0; color: white; padding: 4px 8px; border-radius: 3px; font-size: 12px;">管理员</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.id != session.user.id %}
+                                <form method="POST" action="{{ url_for('delete_account', user_id=user.id) }}" style="display: inline;" onsubmit="return confirm('确定要删除账户 {{ user.username }} 吗？');">
+                                    <button type="submit" class="btn btn-danger btn-small">删除</button>
+                                </form>
+                                {% else %}
+                                <span style="color: #999;">当前用户</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">返回看板</a>
+        </div>
+    </div>
+</body>
+</html>

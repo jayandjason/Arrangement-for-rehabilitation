@@ -1,0 +1,87 @@
+2026-03-31 15:29:09,954 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.3.17:5000
+2026-03-31 15:29:09,955 - INFO - [33mPress CTRL+C to quit[0m
+2026-03-31 15:29:45,216 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.3.17:5000
+2026-03-31 15:29:45,216 - INFO - [33mPress CTRL+C to quit[0m
+2026-03-31 15:30:02,880 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.3.17:5000
+2026-03-31 15:30:02,894 - INFO - [33mPress CTRL+C to quit[0m
+test
+Index route accessed at 2026-03-31 15:47:35.044887
+Login route accessed at 2026-03-31 15:47:35.049959
+Login route accessed at 2026-03-31 15:47:36.776860
+Login route accessed at 2026-03-31 15:48:01.023222
+Index route accessed at 2026-03-31 15:49:20.315335
+Login route accessed at 2026-03-31 15:49:25.940851
+Dashboard route accessed at 2026-03-31 15:49:26.006647
+Login route accessed at 2026-03-31 15:49:42.140365
+Dashboard route accessed at 2026-03-31 15:49:42.144327
+Dashboard route accessed at 2026-03-31 15:49:54.253613
+Export data route accessed at 2026-03-31 15:50:52.383350
+Login route accessed at 2026-03-31 15:51:02.266847
+Dashboard route accessed at 2026-03-31 15:51:02.271612
+Index route accessed at 2026-03-31 15:51:15.563394
+Login route accessed at 2026-03-31 15:51:27.948918
+Dashboard route accessed at 2026-03-31 15:51:27.953571
+Index route accessed at 2026-03-31 15:51:37.672032
+Index route accessed at 2026-03-31 15:52:27.921957
+Login route accessed at 2026-03-31 15:52:27.928806
+Login route accessed at 2026-03-31 15:52:31.592284
+Login route accessed at 2026-03-31 15:52:35.528769
+Dashboard route accessed at 2026-03-31 15:52:35.536246
+Dashboard route accessed at 2026-03-31 15:53:15.409907
+Login route accessed at 2026-03-31 15:53:17.625256
+Login route accessed at 2026-03-31 15:53:21.876252
+Login route accessed at 2026-03-31 15:53:50.712456
+Login route accessed at 2026-05-17 12:14:54.790344
+Login route accessed at 2026-05-17 12:14:54.806256
+Dashboard route accessed at 2026-05-17 12:14:54.806806
+Login route accessed at 2026-05-17 12:14:54.814294
+Dashboard route accessed at 2026-05-17 12:15:02.071122
+Login route accessed at 2026-05-17 12:15:13.607797
+Dashboard route accessed at 2026-05-17 12:15:13.608992
+Dashboard route accessed at 2026-05-17 12:15:25.592546
+Dashboard route accessed at 2026-05-17 12:15:45.763963
+Index route accessed at 2026-05-17 12:23:57.751727
+Login route accessed at 2026-05-17 12:23:57.758632
+Login route accessed at 2026-05-17 12:24:08.873945
+Login route accessed at 2026-05-17 12:24:17.866494
+Login route accessed at 2026-05-17 12:24:21.228391
+Login route accessed at 2026-05-17 12:24:30.279853
+Login route accessed at 2026-05-17 12:24:32.636675
+Login route accessed at 2026-05-17 12:25:16.087790
+Login route accessed at 2026-05-17 12:25:18.218953
+Dashboard route accessed at 2026-05-17 12:25:18.226174
+Login route accessed at 2026-05-17 12:25:25.207317
+Login route accessed at 2026-05-17 12:25:27.894100
+Login route accessed at 2026-05-17 12:25:29.609987
+Login route accessed at 2026-05-17 12:25:34.929019
+Index route accessed at 2026-05-19 16:41:50.148662
+Login route accessed at 2026-05-19 16:41:50.185974
+Login route accessed at 2026-05-19 16:41:55.621296
+Dashboard route accessed at 2026-05-19 16:41:55.638039
+Login route accessed at 2026-05-19 16:44:42.833448
+Login route accessed at 2026-05-19 16:44:45.909038
+Login route accessed at 2026-05-19 16:44:51.217592
+Login route accessed at 2026-05-19 16:44:53.965214
+Index route accessed at 2026-05-22 11:41:41.996553
+Login route accessed at 2026-05-22 11:41:42.030592
+Login route accessed at 2026-05-22 11:41:44.630097
+Login route accessed at 2026-05-22 11:42:38.973664
+Login route accessed at 2026-05-22 11:42:41.555573
+Login route accessed at 2026-05-22 11:42:59.297486
+Login route accessed at 2026-05-22 11:43:01.648993
+Index route accessed at 2026-06-02 16:28:54.580641
+Login route accessed at 2026-06-02 16:28:54.591515
+Login route accessed at 2026-06-02 16:28:56.539206
+Login route accessed at 2026-06-02 16:31:47.080468
+Login route accessed at 2026-06-02 16:31:49.578106
+Login route accessed at 2026-06-02 16:32:19.497328
+Login route accessed at 2026-06-02 16:32:22.858253

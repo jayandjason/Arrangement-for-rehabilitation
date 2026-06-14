@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安排端 - 病人预约管理系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>安排端 - 病人预约管理系统 <small>v{{ config.VERSION }}</small></h1>
+            <div class="user-info">
+                <span>欢迎, {{ session.user.real_name }}</span>
+                <a href="{{ url_for('change_password') }}" class="btn btn-small btn-info">修改密码</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-small">退出</a>
+            </div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- 专业组筛选 -->
+        <section class="section">
+            <h2>筛选患者</h2>
+            <div class="filter-bar">
+                <form method="GET" action="{{ url_for('schedule') }}">
+                    <label>按专业组筛选：</label>
+                    <select name="specialty_group" onchange="this.form.submit()">
+                        <option value="">全部专业组</option>
+                        {% for group in specialty_groups %}
+                            <option value="{{ group }}" {% if selected_group == group %}selected{% endif %}>{{ group }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+        </section>
+
+        <!-- 待安排患者列表 -->
+        <section class="section">
+            <h2>待安排患者列表</h2>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>姓名</th>
+                            <th>年龄</th>
+                            <th>电话</th>
+                            <th>诊断</th>
+                            <th>类型</th>
+                            <th>专业组</th>
+                            <th>就诊</th>
+                            <th>预约医生</th>
+                            <th>治疗项目</th>
+                            <th>预约时间</th>
+                            <th>等待天数</th>
+                            <th>安排操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in patients %}
+                        <tr {% if patient.days_pending > 30 %}class="warning"{% endif %}>
+                            <td>{{ patient.name }}</td>
+                            <td>{{ patient.age }}</td>
+                            <td>{{ patient.phone or '-' }}</td>
+                            <td>{{ patient.diagnosis }}</td>
+                            <td>{{ patient.patient_type }}</td>
+                            <td>{{ patient.specialty_group }}</td>
+                            <td>{{ patient.visit_type }}</td>
+                            <td>{{ patient.doctor or '-' }}</td>
+                            <td>{{ patient.treatment_project or '-' }}</td>
+                            <td>{{ patient.appointment_time[:19] }}</td>
+                            <td>
+                                {% if patient.days_pending > 30 %}
+                                    <span class="warning-text">{{ "%.0f"|format(patient.days_pending) }} 天</span>
+                                {% else %}
+                                    {{ "%.0f"|format(patient.days_pending) }} 天
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-small btn-primary" onclick="schedulePatient({{ patient.id }})">安排治疗</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 已完成安排患者列表 -->
+        <section class="section">
+            <h2>已完成安排患者列表</h2>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>姓名</th>
+                            <th>年龄</th>
+                            <th>电话</th>
+                            <th>诊断</th>
+                            <th>类型</th>
+                            <th>专业组</th>
+                            <th>就诊</th>
+                            <th>预约医生</th>
+                            <th>治疗项目</th>
+                            <th>安排时间</th>
+                            <th>责任治疗师</th>
+                            <th>联合治疗师</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in scheduled_patients %}
+                        <tr>
+                            <td>{{ patient.name }}</td>
+                            <td>{{ patient.age }}</td>
+                            <td>{{ patient.phone or '-' }}</td>
+                            <td>{{ patient.diagnosis }}</td>
+                            <td>{{ patient.patient_type }}</td>
+                            <td>{{ patient.specialty_group }}</td>
+                            <td>{{ patient.visit_type }}</td>
+                            <td>{{ patient.doctor or '-' }}</td>
+                            <td>{{ patient.treatment_project or '-' }}</td>
+                            <td>{{ patient.schedule_time[:19] if patient.schedule_time else '-' }}</td>
+                            <td>{{ patient.primary_therapist or '-' }}</td>
+                            <td>{{ patient.secondary_therapist or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 拒绝安排患者列表 -->
+        <section class="section">
+            <h2>拒绝安排患者列表</h2>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>姓名</th>
+                            <th>年龄</th>
+                            <th>电话</th>
+                            <th>诊断</th>
+                            <th>类型</th>
+                            <th>专业组</th>
+                            <th>就诊</th>
+                            <th>预约医生</th>
+                            <th>治疗项目</th>
+                            <th>拒绝原因</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in rejected_patients %}
+                        <tr>
+                            <td>{{ patient.name }}</td>
+                            <td>{{ patient.age }}</td>
+                            <td>{{ patient.phone or '-' }}</td>
+                            <td>{{ patient.diagnosis }}</td>
+                            <td>{{ patient.patient_type }}</td>
+                            <td>{{ patient.specialty_group }}</td>
+                            <td>{{ patient.visit_type }}</td>
+                            <td>{{ patient.doctor or '-' }}</td>
+                            <td>{{ patient.treatment_project or '-' }}</td>
+                            <td>{{ patient.schedule_reason or '-' }}</td>
+                            <td>
+                                <button class="btn btn-small btn-primary" onclick="schedulePatient({{ patient.id }})">重新安排</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 安排治疗模态框 -->
+        <div id="scheduleModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeScheduleModal()">&times;</span>
+                <h3>安排治疗</h3>
+                <form id="scheduleForm" method="POST">
+                    <input type="hidden" name="patient_id" id="schedule_patient_id">
+                    <div class="form-group">
+                        <label>是否安排治疗 *</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="is_scheduled" value="1" checked onchange="toggleScheduleReason()"> 是</label>
+                            <label><input type="radio" name="is_scheduled" value="0" onchange="toggleScheduleReason()"> 否</label>
+                        </div>
+                    </div>
+                    <div class="form-group" id="schedule_reason_group" style="display: none;">
+                        <label>未安排原因 *</label>
+                        <textarea name="schedule_reason" id="schedule_reason" rows="2" placeholder="请输入未安排原因"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>责任治疗师</label>
+                            <input type="text" name="primary_therapist" placeholder="治疗师姓名">
+                        </div>
+                        <div class="form-group">
+                            <label>联合治疗师</label>
+                            <input type="text" name="secondary_therapist" placeholder="治疗师姓名">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>治疗安排时间</label>
+                            <input type="datetime-local" name="schedule_time">
+                        </div>
+                        <div class="form-group">
+                            <label>就诊类型</label>
+                            <select name="visit_type">
+                                <option value="门诊">门诊</option>
+                                <option value="住院">住院</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">保存安排</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function schedulePatient(id) {
+            document.getElementById('schedule_patient_id').value = id;
+            document.getElementById('scheduleForm').action = `/schedule_patient/${id}`;
+            document.getElementById('scheduleModal').style.display = 'block';
+        }
+
+        function closeScheduleModal() {
+            document.getElementById('scheduleModal').style.display = 'none';
+        }
+
+        function toggleScheduleReason() {
+            const isScheduled = document.querySelector('input[name="is_scheduled"]:checked').value;
+            const reasonGroup = document.getElementById('schedule_reason_group');
+            const reasonField = document.getElementById('schedule_reason');
+
+            if (isScheduled === '0') {
+                reasonGroup.style.display = 'block';
+                reasonField.required = true;
+            } else {
+                reasonGroup.style.display = 'none';
+                reasonField.required = false;
+            }
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
